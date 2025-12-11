@@ -1,3 +1,25 @@
+# HPDIC MOD
+```bash
+sudo apt install -y cmake
+sudo apt install -y golang-go
+sudo apt install -y gcc-11 g++-11
+export CC=/usr/bin/gcc-11
+export CXX=/usr/bin/g++-11
+cd ~/milvus
+./scripts/install_deps_fixed.sh
+sudo ln -sf /usr/bin/clang-format /usr/bin/clang-format-12
+sudo ln -sf /usr/bin/clang-tidy /usr/bin/clang-tidy-12
+sudo apt install pipx -y
+pipx install conan==1.64.1
+conan profile update settings.compiler=gcc default
+conan profile update settings.compiler.version=11 default
+conan profile update settings.compiler.libcxx=libstdc++11 default
+pipx ensurepath
+source ~/.bashrc
+make -j8
+```
+---
+
 <img src="https://github.com/user-attachments/assets/51e33300-7f85-43ff-a05a-3a0317a961f3" alt="milvus banner">
 
 <div class="column" align="middle">

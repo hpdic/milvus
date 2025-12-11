@@ -1,23 +1,65 @@
 # HPDIC MOD
 ```bash
+# 在 Ubuntu 22.04 上构建 Milvus 2.2.11, 固定使用 gcc-11
 sudo apt install -y cmake
 sudo apt install -y golang-go
 sudo apt install -y gcc-11 g++-11
-export CC=/usr/bin/gcc-11
-export CXX=/usr/bin/g++-11
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 130
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 130
+sudo update-alternatives --set gcc /usr/bin/gcc-11
+sudo update-alternatives --set g++ /usr/bin/g++-11
+gcc --version  # 应该显示 11.x.x
+
+# conan 1.64.1
+pipx install conan==1.64.1
+rm -rf ~/.conan
+rm -rf cmake_build
+conan profile new default --detect --force
+conan profile update settings.compiler=gcc default
+conan profile update settings.compiler.version=11 default
+conan profile update settings.compiler.libcxx=libstdc++11 default
+conan profile show default  # 确认是 11
+
+# 构建 Milvus
 cd ~/milvus
 ./scripts/install_deps_fixed.sh
 sudo ln -sf /usr/bin/clang-format /usr/bin/clang-format-12
 sudo ln -sf /usr/bin/clang-tidy /usr/bin/clang-tidy-12
 sudo apt install pipx -y
-pipx install conan==1.64.1
-conan profile update settings.compiler=gcc default
-conan profile update settings.compiler.version=11 default
-conan profile update settings.compiler.libcxx=libstdc++11 default
 pipx ensurepath
 source ~/.bashrc
+make clean
 make -j8
+
+# 运行单元测试
+# ./scripts/start_cluster.sh
+./scripts/start_standalone.sh
+
+make unittest -j8
+make test-cpp -j8
+./scripts/run_cpp_tests.sh
+make test-go -j8
+
+cd tests/python_client
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.11 python3.11-dev
+sudo update-alternatives --config python3
+python3 --version # 应该显示 3.11.x
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+pytest --tags=L0 -n auto
+
+./scripts/stop.sh 
+
+# Hello World 示例
+cd ~/milvus
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/install/lib:$(pwd)/lib
+python hello_milvus.py
 ```
+
 ---
 
 <img src="https://github.com/user-attachments/assets/51e33300-7f85-43ff-a05a-3a0317a961f3" alt="milvus banner">
